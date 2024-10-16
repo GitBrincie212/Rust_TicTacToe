@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use crate::participant;
+use crate::participant::Participant;
 use crate::utils::prompt;
 
 fn init_colour_hashmap(color_map: &mut HashMap<String, String>) {
@@ -12,15 +12,31 @@ fn init_colour_hashmap(color_map: &mut HashMap<String, String>) {
     color_map.insert("".to_string(), "".to_string());
 }
 
-pub(crate) fn read_player_count() -> Vec<participant::Participant> {
+pub(crate) fn get_players(
+    continue_choice_char: char, stored_players: Option<Vec<Participant>>
+) -> (Vec<Participant>, Option<Vec<Participant>>) {
+    if continue_choice_char == '3' {
+        if stored_players.clone().is_none() {
+            println!("Cannot Retrieve Stored Players");
+            let players= read_player_count();
+            return (players.clone(), Option::from(players));
+        }
+        return (stored_players.clone().unwrap(), stored_players);
+    }
+    let players= read_player_count();
+    (players.clone(), Option::from(players))
+}
+
+fn read_player_count() -> Vec<Participant> {
     let mut player_count: u8 = 0;
     while player_count <= 1 {
         let player_count_str: String = prompt(&("How Many Players? ".to_string()));
         player_count = player_count_str.trim().parse().unwrap_or_else(|_| {
+            println!("Cannot Parse The Count. Please Type A Valid Non-Zero Positive Number");
             0
         });
     }
-    let mut players: Vec<participant::Participant> = Vec::new();
+    let mut players: Vec<Participant> = Vec::new();
     let mut symbols: HashSet<char> = HashSet::new();
     let mut color_name_to_ansii: HashMap<String, String> = HashMap::new();
     init_colour_hashmap(&mut color_name_to_ansii);
@@ -56,7 +72,7 @@ pub(crate) fn read_player_count() -> Vec<participant::Participant> {
             continue;
         }
         let is_bot_char: char = prompt(&(
-            format!("Player {}# Computer Or Human (Y/N)? ", symbols.len() + 1))
+            format!("Player {}# Computer(Y) Or Human(N)? ", symbols.len() + 1))
         ).trim().parse().unwrap_or_else(|_| {
             '\0'
         });
@@ -67,7 +83,7 @@ pub(crate) fn read_player_count() -> Vec<participant::Participant> {
         let is_bot: bool = is_bot_char.to_lowercase().to_string() == "y";
         input_colour = "\x1B[1m".to_string() + &*color_name_to_ansii[&input_colour];
         symbols.insert(input_symbol);
-        players.push(participant::Participant{
+        players.push(Participant{
             symbol: input_symbol, colour: input_colour, is_bot
         });
     }

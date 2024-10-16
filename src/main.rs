@@ -1,4 +1,5 @@
 use crate::board_utils::read_position;
+use crate::game_init::get_players;
 use crate::participant::Participant;
 
 mod win_check;
@@ -9,8 +10,11 @@ mod participant;
 
 fn main() {
     let mut continue_choice: bool = true;
+    let mut continue_choice_char = '1';
+    let mut stored_players: Option<Vec<Participant>> = None;
     while continue_choice {
-        let players: Vec<Participant> = game_init::read_player_count();
+        let players;
+        (players, stored_players) = get_players(continue_choice_char, stored_players);
         let player_count: u8 = players.len() as u8;
 
         let mut winning_index: i8 = -1;
@@ -22,7 +26,7 @@ fn main() {
         let scale_value: usize = 3;
         let mut board = vec!(vec!(player_empty; scale_value); scale_value);
         while winning_index == -1 {
-            print!("\x1B[2J\x1B[1;1H");
+            clean_screen!();
             board_utils::display_board(
                 &board,
                 (winning_index, winning_highlights),
@@ -35,7 +39,7 @@ fn main() {
             curr_player_index += 1;
             curr_player_index = curr_player_index % player_count;
         }
-        print!("\x1B[2J\x1B[1;1H");
+        clean_screen!();
         /*
         When winning index is -2 it means the game ended
         in a draw I know I could use a struct for that
@@ -44,9 +48,9 @@ fn main() {
             board_utils::display_board(
                 &board.clone(),
                 (winning_index, winning_highlights),
-                |_, win_info, position | {
+                |player, win_info, position | {
                     if win_info.1.contains(&vec![position.0, position.1]) {
-                        return "\x1B[1m\x1B[32m".to_string();
+                        return format!("\x1B[1m{}", player.colour);
                     }
                     "\x1B[2m".to_string()
                 });
@@ -60,12 +64,18 @@ fn main() {
                 });
             println!("The Game Ended In A Draw. No one won");
         }
-        let mut continue_choice_char: char = ' ';
-        while continue_choice_char != 'Y' && continue_choice_char != 'N' {
-            let continue_choice_str = utils::prompt(&"Would You Like To Continue(Y/N)? ".to_string());
-            continue_choice_char = continue_choice_str.trim().to_uppercase().parse().unwrap();
+        continue_choice_char = ' ';
+        let menu: &String = &"Would You Like To Continue?\n1. New Game\n2. Abort Game\n3. Replay Game\n\n>> ".to_string();
+        while continue_choice_char != '1' && continue_choice_char != '2' && continue_choice_char != '3' {
+            let continue_choice_str = utils::prompt(menu);
+            continue_choice_char = continue_choice_str.trim().to_uppercase().parse().unwrap_or_else(|_| {
+                    println!("Cannot Select A Valid Number On The Menu");
+                    clean_screen!();
+                    return ' ';
+                }
+            )
         }
-        continue_choice = continue_choice_char == 'Y';
-        print!("\x1B[2J\x1B[1;1H");
+        continue_choice = continue_choice_char == '1' || continue_choice_char == '3';
+        clean_screen!();
     }
 }
