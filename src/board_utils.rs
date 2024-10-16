@@ -1,6 +1,6 @@
 use crate::utils;
 use crate::participant::Participant;
-use rand::Rng;
+use rand::{thread_rng, Rng};
 
 pub(crate) fn display_board(
     board: &Vec<Vec<Participant>>,
@@ -21,10 +21,14 @@ pub(crate) fn display_board(
             if row != 0 {
                 output += middle_border.as_str();
             }
+            let mut symbol: String = element.symbol.to_string();
+            if symbol == " " && win_info.0 == -1 {
+                symbol = format!("\x1B[2m{}", index.to_string().parse::<char>().unwrap())
+            }
             output += &format!(
                 "{}{}\x1b[0m",
                 colour_func(element, win_info.clone(), (column, row)),
-                element.symbol
+                symbol
             );
             index += 1
         }
@@ -77,7 +81,7 @@ fn human_compute(_: &mut Vec<Vec<Participant>>, player: &Participant) -> (u8, bo
 
 fn bot_compute(board: &mut Vec<Vec<Participant>>, computer: &Participant) -> (u8, bool) {
     // todo: Add the actual logic to the computer participant
-    (rand::thread_rng().gen_range(0..9), false)
+    (thread_rng().gen_range(0..9), false)
 }
 
 #[allow(dead_code)]
