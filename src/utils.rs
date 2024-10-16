@@ -9,3 +9,10 @@ pub(crate) fn prompt(input_str: &String) -> String {
     stdin().read_line(&mut input).unwrap();
     input
 }
+
+#[macro_export]
+macro_rules! clean_screen {
+    () => {
+        println!("\x1B[2J\x1B[1;1H");
+    };
+}
